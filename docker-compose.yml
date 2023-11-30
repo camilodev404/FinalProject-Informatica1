@@ -1,0 +1,67 @@
+version: "3"
+
+services:
+  proyecto_db:
+    container_name: proyecto_db
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./DB/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - mynet
+  
+  fabricante_app:
+    container_name: fabricante_app
+    image: camilodev/fabricante_app:1.0.0
+    build: 
+      context: .
+      dockerfile: ./MSFabricantes/Dockerfile
+    ports:
+      - "4001:4001"
+    env_file:
+      - ./MSFabricantes/.env
+    depends_on:
+      - proyecto_db
+    networks:
+      - mynet
+    
+  vehiculo_app:
+    container_name: vehiculo_app
+    image: camilodev/vehiculo_app:1.0.0
+    build: 
+      context: .
+      dockerfile: ./MSVehiculos/Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./MSVehiculos/.env
+    depends_on:
+      - proyecto_db
+    networks:
+      - mynet
+  
+  front_app:
+    container_name: front_app
+    image: camilodev/front_app:1.0.0
+    build:
+      context: ./finalproject
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - vehiculo_app
+      - fabricante_app
+    networks:
+      - mynet
+  
+volumes:
+  pgdata: {}
+
+networks:
+  mynet: 
